@@ -31,11 +31,15 @@ REPRO_DELAY_MS=4000 npx expo start --dev-client --port 8081
 xcrun simctl openurl booted "exp+dev-launcher-loading-repro://expo-development-client/?url=http%3A%2F%2Flocalhost%3A8081"
 ```
 
-`scripts/film-deeplink.sh` does the same on a given simulator and saves a screenshot every
-~100ms from the moment the link opens.
+`scripts/film-deeplink.sh` does the same on a given simulator and records the screen
+(`film.mp4`, the link opens 1s in).
 
 **Expected:** some sign the project is loading, from the moment the link opens.
 **Actual:** the launcher's home screen stays as it is until the bundle starts downloading.
+
+Before (58.0.14) and after (the `fix` branch), `REPRO_DELAY_MS=4000`, real time:
+
+https://github.com/user-attachments/assets/cbe47e2e-2f90-48b3-acf2-e2e045ee41f2
 
 ## Fix
 

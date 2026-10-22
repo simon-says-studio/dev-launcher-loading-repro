@@ -1,6 +1,6 @@
 #!/bin/bash
 # Open the project by deep link on a simulator, the way a scanned QR code does,
-# and film the screen from that moment.
+# and record the screen (film.mp4) from a second before.
 #
 #   scripts/film-deeplink.sh <app> <out dir> [delay ms]
 #
@@ -14,7 +14,7 @@ BUNDLE=build.simonsays.devlauncherrepro
 SCHEME=exp+dev-launcher-loading-repro
 ROOT="$(cd "$(dirname "$0")/.." && pwd)"
 ms() { perl -MTime::HiRes=time -e 'printf "%d", time*1000'; }
-rm -rf "$OUT"; mkdir -p "$OUT/frames"
+rm -rf "$OUT"; mkdir -p "$OUT"
 
 tap_open() {
   local i lbl
@@ -40,12 +40,12 @@ URL="$SCHEME://expo-development-client/?url=$(node -p 'encodeURIComponent(proces
 xcrun simctl openurl "$UDID" "$SCHEME://"; tap_open; sleep 12
 xcrun simctl terminate "$UDID" "$BUNDLE"; sleep 3
 
+xcrun simctl io "$UDID" recordVideo --codec=h264 --force "$OUT/film.mp4" > "$OUT/record.log" 2>&1 &
+REC=$!
+until grep -q "Recording started" "$OUT/record.log"; do sleep 0.2; done
+sleep 1
 T0=$(ms); echo "$T0" > "$OUT/t0"
-( while [ ! -f "$OUT/stop" ]; do
-    xcrun simctl io "$UDID" screenshot --type=jpeg "$OUT/frames/$(( $(ms) - T0 )).jpg" >/dev/null 2>&1
-  done ) &
-SHOTS=$!
 xcrun simctl openurl "$UDID" "$URL"
 sleep $(( DELAY * 3 / 1000 + 15 ))
-touch "$OUT/stop"; wait $SHOTS
-echo "frames: $(ls "$OUT/frames" | wc -l | tr -d ' ')"
+kill -INT $REC; wait $REC
+echo "film: $OUT/film.mp4 (the link opens 1s in)"
